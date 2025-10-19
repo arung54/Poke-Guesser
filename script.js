@@ -269,7 +269,8 @@ function handleSubmitGuess() {
 
             const summaryText = `🎉 Poké-Stats Guesser Solved! (${new Date().toLocaleDateString()})\n` +
                                 `Guesses: ${guessCount}\n` +
-                                `Hints Used: ${hintsUsedList.join(', ') || 'None'}\n\n`;
+                                `Hints Used: ${hintsUsedList.join(', ') || 'None'}\n\n` +
+                                `https://arung54.github.io/Poke-Guesser/`;
 
             const messageEl = document.getElementById('message');
             

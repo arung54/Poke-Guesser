@@ -1,0 +1,150 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #cc0000; /* Pokémon red */
+}
+
+/* Stats Table Styling */
+#stats-table, .guess-row {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+#stats-table th, #stats-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#stats-table thead th {
+    background-color: #3b4cca; /* Pokémon blue */
+    color: white;
+}
+
+/* Metadata and Hints */
+.metadata-clues {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px 0;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+#clue-type1, #clue-type2, #clue-gen {
+    color: #888;
+}
+
+.hint-buttons {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.hint-buttons button {
+    padding: 8px 15px;
+    margin: 0 5px;
+    background-color: #ffde00; /* Pokémon yellow */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Guess Input */
+.guess-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#pokemon-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+}
+
+#submit-guess-btn {
+    padding: 10px 20px;
+    background-color: #008000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Guess History Feedback */
+.guess-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr) 1.5fr; /* Name + 6 Stats + Type/Gen */
+    gap: 5px;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ccc;
+    font-size: 0.9em;
+}
+
+.guess-cell {
+    text-align: center;
+    padding: 5px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* Feedback Colors */
+.green { background-color: #a8e6a8; } /* Correct */
+.yellow { background-color: #fffb91; } /* Close */
+.red { background-color: #ff9191; } /* Incorrect */
+
+.correct-guess {
+    background-color: #008000;
+    color: white; /* Ensure the main text is white */
+    padding: 15px;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+/* New rule to ensure header text inside the congratulations box is white */
+.correct-guess h2 {
+    color: white; 
+    margin-top: 0;
+}
+
+#share-summary {
+    width: 90%;
+    margin: 10px auto;
+    padding: 10px;
+    resize: none;
+    border: 1px solid #3b4cca;
+    font-size: 0.9em;
+    background-color: #f8f8ff;
+    display: block;
+}
+
+.correct-guess button {
+    padding: 8px 15px;
+    background-color: #3b4cca; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}

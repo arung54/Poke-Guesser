@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poké-Guesser (Daily Game)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Poké-Guesser</h1>
+        <p>Guess the Pokémon based on its base stats!</p>
+
+        <table id="stats-table">
+            <thead>
+                <tr><th colspan="2">Target Pokémon Stats</th></tr>
+            </thead>
+            <tbody id="stat-values">
+                </tbody>
+        </table>
+
+        <div class="metadata-clues">
+            <p>Type 1: <span id="clue-type1">???</span></p>
+            <p>Type 2: <span id="clue-type2">???</span></p>
+            <p>Generation: <span id="clue-gen">???</span></p>
+        </div>
+
+        <div class="hint-buttons">
+            <button id="hint-type1-btn">Reveal Type 1</button>
+            <button id="hint-type2-btn">Reveal Type 2</button>
+            <button id="hint-gen-btn">Reveal Generation</button>
+        </div>
+
+        <div class="guess-area">
+            <input type="text" id="pokemon-input" placeholder="Enter Pokémon Name" list="pokemon-list">
+            <datalist id="pokemon-list">
+                </datalist>
+            <button id="submit-guess-btn">Guess</button>
+        </div>
+        
+        <h2>Your Guesses</h2>
+        <div id="guess-history">
+            </div>
+
+        <p id="message"></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

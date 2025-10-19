@@ -159,14 +159,6 @@ function renderGuessHistory() {
             row.innerHTML += `<div class="guess-cell ${f.class}">${f.value} ${f.indicator}</div>`;
         });
 
-        // 3. Metadata Feedback
-        let metaFeedback = [];
-        if (guess.pokemon.type1 === targetPokemon.type1) metaFeedback.push(`T1: ${guess.pokemon.type1}`);
-        if (guess.pokemon.type2 === targetPokemon.type2) metaFeedback.push(`T2: ${guess.pokemon.type2}`);
-        if (guess.pokemon.generation === targetPokemon.generation) metaFeedback.push(`Gen: ${guess.pokemon.generation}`);
-        
-        row.innerHTML += `<div class="guess-cell">${metaFeedback.join(', ') || '-'}</div>`;
-
         historyEl.appendChild(row);
     });
 }

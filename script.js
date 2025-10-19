@@ -142,8 +142,7 @@ function renderGuessHistory() {
     headerRow.className = 'guess-row';
     headerRow.style.fontWeight = 'bold';
     headerRow.innerHTML = `<div class="guess-cell">Name</div>` + 
-                          STATS.map(s => `<div class="guess-cell">${s.toUpperCase().replace('_', '. ')}</div>`).join('') +
-                          `<div class="guess-cell">Metadata</div>`;
+                          STATS.map(s => `<div class="guess-cell">${s.toUpperCase().replace('_', '. ')}</div>`).join('');
     historyEl.appendChild(headerRow);
 
     // KEY CHANGE: Iterate over a reversed copy of the array

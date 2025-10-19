@@ -267,10 +267,9 @@ function handleSubmitGuess() {
             const guessCount = guesses.length;
             const hintsUsedList = HINTS.filter(h => hintsUsed[h]).map(h => h.charAt(0).toUpperCase()); // T1, T2, G
 
-            const summaryText = `🎉 Poké-Guesser Solved! (${new Date().toLocaleDateString()})\n` +
+            const summaryText = `🎉 Poké-Stats Guesser Solved! (${new Date().toLocaleDateString()})\n` +
                                 `Guesses: ${guessCount}\n` +
-                                `Hints Used: ${hintsUsedList.join(', ') || 'None'}\n\n` +
-                                `#PokemonGuesser`;
+                                `Hints Used: ${hintsUsedList.join(', ') || 'None'}\n\n`;
 
             const messageEl = document.getElementById('message');
             

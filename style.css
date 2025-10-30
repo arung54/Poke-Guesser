@@ -92,7 +92,7 @@ h1, h2 {
 /* Guess History Feedback */
 .guess-row {
     display: grid;
-    grid-template-columns: 1.5fr repeat(6, 1fr); /* Name column (1.5fr) and 6 stat columns (1fr each) */
+    grid-template-columns: 1.5fr repeat(7, 1fr); /* Name column (1.5fr) and 6 stat columns (1fr each) */
     gap: 5px;
     padding: 8px 0;
     border-bottom: 1px dashed #ccc;

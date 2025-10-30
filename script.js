@@ -4,6 +4,7 @@ const HINTS = ['type1', 'type2', 'generation'];
 let pokemonData = [];
 let targetPokemon = null;
 let guesses = [];
+let gameHistoryString = '';
 let hintsUsed = { type1: false, type2: false, generation: false };
 let gameWon = false;
 
@@ -55,6 +56,51 @@ function selectDailyPokemon(data) {
 }
 
 /**
+ * Renders the victory message and shareable text when the game is won.
+ */
+function renderVictoryMessage() {
+    const guessCount = guesses.length;
+    // Map Type1/Type2/Generation to T1, T2, G for the share summary
+    const hintsUsedList = HINTS.filter(h => hintsUsed[h]).map(h => h.charAt(0).toUpperCase()); 
+    
+    // Map the history string characters to emojis for the share text
+    const historyEmojis = gameHistoryString
+        .split('')
+        .map(char => {
+            switch (char) {
+                case 'X': return '❌';
+                case 'O': return '✅';
+                case 'T': return '1️⃣'; // Type 1
+                case 'Y': return '2️⃣'; // Type 2
+                case 'G': return '🗓️'; // Generation
+                default: return char;
+            }
+        })
+        .join('');
+
+    // Construct the summary text
+    const summaryText = `🎉 Poké-Guesser Solved! (${new Date().toLocaleDateString()})\n` +
+                        `Guesses: ${guessCount}\n` +
+                        `History: ${historyEmojis}\n\n` +
+                        `#PokemonGuesser`;
+
+    const messageEl = document.getElementById('message');
+    
+    // 1. Set the victory message content
+    messageEl.className = 'correct-guess';
+    messageEl.innerHTML = `
+        <h2>CONGRATULATIONS!</h2>
+        <p>You correctly identified ${targetPokemon.name} in ${guessCount} guesses!</p>
+        <textarea id="share-summary" rows="5" readonly>${summaryText}</textarea>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('share-summary').value)">Copy Summary</button>
+    `;
+
+    // 2. Move the message element above the guess history.
+    const container = document.querySelector('.container');
+    container.insertBefore(messageEl, document.getElementById('guess-history').previousSibling);
+}
+
+/**
  * Compares the guessed Pokémon's stats against the target.
  * @param {object} guessPokemon - The Pokémon the user guessed.
  * @param {object} targetPokemon - The target Pokémon.
@@ -90,6 +136,32 @@ function compareGuess(guessPokemon, targetPokemon) {
         });
     }
 
+    const guessTotal = STATS.reduce((sum, stat) => sum + parseInt(guessPokemon[stat]), 0);
+    const targetTotal = STATS.reduce((sum, stat) => sum + parseInt(targetPokemon[stat]), 0);
+
+    let totalColorClass = 'red';
+    let totalIndicator = '';
+    const totalCloseRange = 20; // A wider range for 'close' Total comparison
+
+    if (guessTotal === targetTotal) {
+        totalColorClass = 'green';
+    } else if (Math.abs(guessTotal - targetTotal) <= totalCloseRange) {
+        totalColorClass = 'yellow';
+    }
+
+    if (guessTotal < targetTotal) {
+        totalIndicator = '↑';
+    } else if (guessTotal > targetTotal) {
+        totalIndicator = '↓';
+    }
+
+    feedback.push({
+        stat: 'total', // Use 'total' as the key
+        value: guessTotal,
+        class: totalColorClass,
+        indicator: totalIndicator
+    });
+
     return feedback;
 }
 
@@ -124,7 +196,15 @@ function renderTargetStats() {
 
     statValuesEl.innerHTML = html;
 }
-
+const STAT_ABBREVIATIONS = {
+    'hp': 'HP',
+    'attack': 'ATK',
+    'defense': 'DEF',
+    'sp_attack': 'SPA',
+    'sp_defense': 'SPD',
+    'speed': 'SPE'
+    // 'total' will be handled separately as 'BST'
+};
 /**
  * Renders the history of user guesses.
  */
@@ -141,8 +221,10 @@ function renderGuessHistory() {
     const headerRow = document.createElement('div');
     headerRow.className = 'guess-row';
     headerRow.style.fontWeight = 'bold';
+    const statHeaders = STATS.map(s => `<div class="guess-cell">${STAT_ABBREVIATIONS[s]}</div>`).join('');
     headerRow.innerHTML = `<div class="guess-cell">Name</div>` + 
-                          STATS.map(s => `<div class="guess-cell">${s.toUpperCase().replace('_', '. ')}</div>`).join('');
+                          statHeaders +
+                          `<div class="guess-cell">BST</div>`; // <-- BST for Base Stat Total
     historyEl.appendChild(headerRow);
 
     // KEY CHANGE: Iterate over a reversed copy of the array
@@ -189,7 +271,8 @@ function saveGameState() {
         date: getDailySeed(),
         guesses: guesses,
         hintsUsed: hintsUsed,
-        gameWon: gameWon
+        gameWon: gameWon,
+        gameHistoryString: gameHistoryString
     };
     localStorage.setItem('pokeGuesserState', JSON.stringify(state));
 }
@@ -208,9 +291,10 @@ function loadGameState() {
         guesses = state.guesses;
         hintsUsed = state.hintsUsed;
         gameWon = state.gameWon;
+        gameHistoryString = state.gameHistoryString || ''
         if (gameWon) {
-            document.getElementById('message').className = 'correct-guess';
-            document.getElementById('message').textContent = `Correct! It was ${targetPokemon.name}!`;
+            renderVictoryMessage(); 
+            document.getElementById('submit-guess-btn').disabled = true;
         }
     } else {
         // Old game state, clear it
@@ -247,35 +331,19 @@ function handleSubmitGuess() {
     document.getElementById('message').textContent = '';
 
     // 1. Process Guess
+
     const feedback = compareGuess(guessedPokemon, targetPokemon);
     guesses.push({ name: guessedPokemon.name, pokemon: guessedPokemon, feedback: feedback });
 
     // 2. Check for Win
     if (guessedPokemon.name.toLowerCase() === targetPokemon.name.toLowerCase()) {
+            gameHistoryString += 'O'; // 'O' for right guess
             gameWon = true;
             document.getElementById('submit-guess-btn').disabled = true;
 
-            const guessCount = guesses.length;
-            const hintsUsedList = HINTS.filter(h => hintsUsed[h]).map(h => h.charAt(0).toUpperCase()); // T1, T2, G
-
-            const summaryText = `🎉 Poké-Stats Guesser Solved! (${new Date().toLocaleDateString()})\n` +
-                                `Guesses: ${guessCount}\n` +
-                                `Hints Used: ${hintsUsedList.join(', ') || 'None'}\n\n` +
-                                `https://arung54.github.io/Poke-Guesser/`;
-
-            const messageEl = document.getElementById('message');
-            
-            // Victory message above all guesses
-            messageEl.className = 'correct-guess';
-            messageEl.innerHTML = `
-                <h2>CONGRATULATIONS!</h2>
-                <p>You correctly identified ${targetPokemon.name} in ${guessCount} guesses!</p>
-                <textarea id="share-summary" rows="5" readonly>${summaryText}</textarea>
-                <button onclick="navigator.clipboard.writeText(document.getElementById('share-summary').value)">Copy Summary</button>
-            `;
-
-            // Since the victory message now provides the name, we don't need to show the full name
-            // inside the guess history, but we keep the history to show the path.
+            renderVictoryMessage();
+        } else {
+            gameHistoryString += 'X'; // 'X' for wrong guess
         }
 
         // 3. Update UI and State
@@ -283,14 +351,15 @@ function handleSubmitGuess() {
         renderGuessHistory();
         renderHints(); // Update hint button state
         saveGameState();
-    }
+    } 
 
 function handleHintClick(hintType) {
     if (gameWon || hintsUsed[hintType]) return;
 
-    if (hintType === 'type2' && !targetPokemon.type2) {
-        document.getElementById('message').textContent = 'This Pokémon only has one type!';
-        return;
+    switch (hintType) {
+        case 'type1': gameHistoryString += 'T'; break;
+        case 'type2': gameHistoryString += 'Y'; break; // 'Y' for Type 2
+        case 'generation': gameHistoryString += 'G'; break;
     }
 
     hintsUsed[hintType] = true;

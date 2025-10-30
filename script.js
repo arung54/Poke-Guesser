@@ -79,10 +79,9 @@ function renderVictoryMessage() {
         .join('');
 
     // Construct the summary text
-    const summaryText = `🎉 Poké-Guesser Solved! (${new Date().toLocaleDateString()})\n` +
-                        `Guesses: ${guessCount}\n` +
-                        `History: ${historyEmojis}\n\n` +
-                        `#PokemonGuesser`;
+    const summaryText = `🎉 Poké-Stats Guesser Solved! (${new Date().toLocaleDateString()})\n` +
+                        `Guesses/Hints: ${historyEmojis}\n\n` +
+                        `https://arung54.github.io/Poke-Guesser/`;
 
     const messageEl = document.getElementById('message');
     

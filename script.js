@@ -8,22 +8,59 @@ let gameHistoryString = '';
 let hintsUsed = { type1: false, type2: false, generation: false };
 let gameWon = false;
 
-// --- A. Utility Functions ---
+// --- A. Robust PRNG Functions (Replacement Block) ---
 
 /**
- * Deterministic PRNG using a simple LCG
- * @param {number} seed 
+ * cyrb128: A non-cryptographic string hash function (128-bit)
+ * Used to turn the date string into four 32-bit seeds for sfc32.
  */
-function seededRandom(seed) {
-    let m = 0x80000000; // 2^31
-    let a = 1103515245;
-    let c = 12345;
-    let state = seed;
-    
-    return function() {
-        state = (a * state + c) % m;
-        return state / m; // Normalized float between 0 and 1
+function cyrb128(str) {
+    let h1 = 1779033703, h2 = 3144134277,
+        h3 = 1013904242, h4 = 2773480762;
+    for (let i = 0, k; i < str.length; i++) {
+        k = str.charCodeAt(i);
+        h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+        h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+        h3 = h4 ^ Math.imul(h4 ^ k, 951274213);
+        h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
     }
+    h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+    h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+    h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+    h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+    h1 ^= (h2 ^ h3 ^ h4), h2 ^= h1, h3 ^= h1, h4 ^= h1;
+    // We only need the first four 32-bit parts as seeds
+    return [h1>>>0, h2>>>0, h3>>>0, h4>>>0];
+}
+
+/**
+ * sfc32: A highly performant 32-bit PRNG generator function.
+ * It returns a function that, when called, produces a random number (0 to 1).
+ */
+function sfc32(a, b, c, d) {
+    return function() {
+        a |= 0; b |= 0; c |= 0; d |= 0;
+        let t = (a + b | 0) + d | 0;
+        d = d + 1 | 0;
+        a = b ^ b >>> 9;
+        b = c + (c << 3) | 0;
+        c = (c << 21 | c >>> 11);
+        c = c + t | 0;
+        return (t >>> 0) / 4294967296; // Normalize to 0-1
+    }
+}
+
+/**
+ * seededRandom: Takes the date seed, hashes it, and returns the PRNG generator.
+ * @param {string} seedString - The date string from getDailySeed().
+ * @returns {function} - The PRNG generator function (sfc32 closure).
+ */
+function seededRandom(seedString) {
+    // 1. Hash the date string to get four robust seeds
+    const seeds = cyrb128(seedString);
+    
+    // 2. Return the sfc32 generator function using those seeds
+    return sfc32(seeds[0], seeds[1], seeds[2], seeds[3]);
 }
 
 /**
@@ -34,12 +71,7 @@ function getDailySeed() {
     const dateString = today.getFullYear().toString() + 
                        (today.getMonth() + 1).toString().padStart(2, '0') + 
                        today.getDate().toString().padStart(2, '0');
-    
-    let seed = 0;
-    for (let i = 0; i < dateString.length; i++) {
-        seed = (seed * 31 + dateString.charCodeAt(i)) % 1000000007;
-    }
-    return seed;
+    return dateString
 }
 
 // --- B. Core Game Logic ---

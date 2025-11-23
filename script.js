@@ -395,19 +395,44 @@ function handleHintClick(hintType) {
 
     hintsUsed[hintType] = true;
     renderHints();
+    populateDatalist();
     saveGameState();
 }
 
 /**
  * Populates the datalist for auto-completion.
  */
-function populateDatalist() {
-    const datalist = document.getElementById('pokemon-list');
-    datalist.innerHTML = pokemonData
+function populateDatalist() {const datalist = document.getElementById('pokemon-list');
+    
+    // Start with all Pokémon
+    let filteredPokemon = pokemonData;
+
+    // --- Filtering Logic ---
+    
+    // 1. Filter by Type 1
+    if (hintsUsed.type1) {
+        const requiredType1 = targetPokemon.type1;
+        filteredPokemon = filteredPokemon.filter(p => p.type1 === requiredType1);
+    }
+    
+    // 2. Filter by Type 2
+    if (hintsUsed.type2) {
+        const requiredType2 = targetPokemon.type2;
+        filteredPokemon = filteredPokemon.filter(p => p.type2 === requiredType2);
+    }
+    
+    // 3. Filter by Generation
+    if (hintsUsed.generation) {
+        const requiredGen = targetPokemon.generation;
+        filteredPokemon = filteredPokemon.filter(p => p.generation === requiredGen);
+    }
+
+    // --- Generate Datalist Options ---
+    
+    datalist.innerHTML = filteredPokemon
         .map(p => `<option value="${p.name}">`)
         .join('');
 }
-
 // --- E. Initialization ---
 
 async function initializeGame() {

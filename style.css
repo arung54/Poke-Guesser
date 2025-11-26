@@ -148,3 +148,63 @@ h1, h2 {
     cursor: pointer;
     margin-bottom: 10px;
 }
+
+/* Styling for the new stat bars */
+#stats-table tbody tr td:first-child {
+    width: 20%; /* Stat abbreviation column width */
+    font-weight: bold;
+    text-align: left;
+    padding-right: 5px; /* Adjust padding for spacing */
+}
+
+/* Selects the second column (stat bar and value) */
+#stats-table tbody tr td:last-child {
+    width: 80%; /* Stat bar column width */
+    text-align: left;
+}
+
+/* Revert the padding change made earlier for the stat-bar-cell class */
+.stat-bar-cell {
+    position: relative;
+    padding: 0; 
+    height: 30px; 
+    /* Remove padding-left: 10px; from here if it was added, 
+       as it interferes with the 80% width when combined with the 100% width of the container */
+}
+
+/* Ensure the total row has its text readable—it needs standard padding back */
+#stat-values tr:last-child td {
+    padding: 8px; 
+}
+
+.stat-bar-container {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    display: flex; /* Helps center the stat value */
+    align-items: center;
+}
+
+.stat-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    opacity: 0.6; /* Light color, doesn't affect readability */
+    border-radius: 2px;
+}
+
+.stat-value-overlay {
+    position: relative; /* Keep the value on top of the bar */
+    z-index: 2;
+    font-weight: bold;
+    color: #333; /* Dark text for readability */
+    padding-left: 5px; 
+}
+
+/* Styling for the autocomplete toggle */
+.autocomplete-toggle {
+    text-align: right;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}

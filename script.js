@@ -74,6 +74,37 @@ function getDailySeed() {
     return dateString
 }
 
+/**
+ * Toggles the autocomplete suggestions on the input field.
+ * @param {boolean} enabled - True to show datalist, False to hide.
+ */
+function toggleAutocomplete(enabled) {
+    const inputEl = document.getElementById('pokemon-input');
+    const checkboxEl = document.getElementById('toggle-autocomplete');
+
+    if (enabled) {
+        inputEl.setAttribute('list', 'pokemon-list');
+        checkboxEl.checked = true;
+    } else {
+        inputEl.removeAttribute('list');
+        checkboxEl.checked = false;
+    }
+    // Save the user's preference
+    localStorage.setItem('pokeGuesser_autocomplete', enabled);
+}
+
+/**
+ * Loads the user's autocomplete preference from local storage.
+ */
+function loadAutocompletePreference() {
+    const preference = localStorage.getItem('pokeGuesser_autocomplete');
+    
+    // Default to true (enabled) if no preference is found
+    const enabled = (preference === 'false') ? false : true; 
+    
+    toggleAutocomplete(enabled);
+}
+
 // --- B. Core Game Logic ---
 
 /**
@@ -203,24 +234,65 @@ function compareGuess(guessPokemon, targetPokemon) {
  * Renders the target stats
  */
 function renderTargetStats() {
-    if (!targetPokemon) return; // Safety check
+    if (!targetPokemon) return; 
 
     const statValuesEl = document.getElementById('stat-values');
     
-    // Calculate total for display
     const total = STATS.reduce((sum, stat) => sum + parseInt(targetPokemon[stat]), 0);
+    const MAX_STAT_VALUE = 255; 
+    const STAT_ABBREVIATIONS = {
+        'hp': 'HP', 'attack': 'ATK', 'defense': 'DEF', 
+        'sp_attack': 'SPA', 'sp_defense': 'SPD', 'speed': 'SPE'
+    };
+
+    let html = STATS.map(stat => {
+        const value = parseInt(targetPokemon[stat]);
+        const widthPercent = (value / MAX_STAT_VALUE) * 100;
+
+        // --- NEW PIECEWISE CONTINUOUS COLOR LOGIC ---
+        const CLAMP_POINT = 130;
+        const HUE_AT_CLAMP = 120; // Green/Blue-Green
+        const MAX_HUE = 200;      // Blue/Purple
+
+        let hue;
+
+        if (value <= CLAMP_POINT) {
+            // Segment 1: 0 to 130 (Hue 0° to 120°)
+            // Formula: H = (Value / 130) * 120
+            hue = (value / CLAMP_POINT) * HUE_AT_CLAMP;
+        } else {
+            // Segment 2: 130 to 255 (Hue 120° to 200°)
+            // We are mapping the range (130 to 255) to the Hue range (120° to 200°)
+            const valueRange = MAX_STAT_VALUE - CLAMP_POINT; // 125
+            const hueRange = MAX_HUE - HUE_AT_CLAMP;         // 80
+            
+            // Linear interpolation calculation:
+            hue = HUE_AT_CLAMP + ((value - CLAMP_POINT) / valueRange) * hueRange;
+        }
+
+        // Final calculated hue (clamped for safety)
+        const finalHue = Math.round(Math.min(Math.max(hue, 0), 360));
+        
+        // Define the HSL color string: Saturation (S=70%), Lightness (L=60%)
+        const continuousColor = `hsl(${finalHue}, 70%, 60%)`;
+        
+        return `
+            <tr>
+                <td>${STAT_ABBREVIATIONS[stat]}</td>
+                <td class="stat-bar-cell">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar" style="width: ${widthPercent}%; background-color: ${continuousColor};"></div>
+                        <span class="stat-value-overlay">${value}</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
     
-    let html = STATS.map(stat => `
-        <tr>
-            <td>${stat.toUpperCase().replace('_', '. ')}</td>
-            <td>${targetPokemon[stat]}</td>
-        </tr>
-    `).join('');
-    
-    // Add the Total stat
+    // Add the Total stat 
     html += `
         <tr style="font-weight: bold; border-top: 2px solid #333;">
-            <td>TOTAL</td>
+            <td>BST</td>
             <td>${total}</td>
         </tr>
     `;
@@ -454,6 +526,8 @@ async function initializeGame() {
     renderGuessHistory();
     populateDatalist();
 
+    loadAutocompletePreference();
+
     // Setup Event Listeners
     document.getElementById('submit-guess-btn').addEventListener('click', handleSubmitGuess);
     document.getElementById('pokemon-input').addEventListener('keypress', (e) => {
@@ -463,6 +537,10 @@ async function initializeGame() {
     document.getElementById('hint-type1-btn').addEventListener('click', () => handleHintClick('type1'));
     document.getElementById('hint-type2-btn').addEventListener('click', () => handleHintClick('type2'));
     document.getElementById('hint-gen-btn').addEventListener('click', () => handleHintClick('generation'));
+    
+    document.getElementById('toggle-autocomplete').addEventListener('change', (e) => {
+        toggleAutocomplete(e.target.checked);
+    });
 }
 
 // Start the game!

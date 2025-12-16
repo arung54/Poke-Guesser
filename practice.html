@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poké-Stats Guesser</title>
+    <title>Poké-Stats Guesser - Practice Mode</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-        <div class="container">
+    <div class="container">
         <h1>Poké-Stats Guesser</h1>
         <div class="mode-switch-link">
-            <p>Daily Mode. <a href="index.html">Switch to Practice Mode</a></p>
+            <p>Practice Mode. <a href="index.html">Switch to Daily Mode</a></p>
         </div>
 
         <table id="stats-table">
@@ -44,14 +44,14 @@
             <input type="checkbox" id="toggle-autocomplete">
             <label for="toggle-autocomplete">Autocomplete Suggestions</label>
         </div>
-        
-        <h2>Your Guesses</h2>
-        <div id="guess-history">
-            </div>
 
         <p id="message"></p>
-    </div>
 
+        <div id="guess-history">
+            <h2>Guess History</h2>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

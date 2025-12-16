@@ -7,8 +7,6 @@ let guesses = [];
 let gameHistoryString = '';
 let hintsUsed = { type1: false, type2: false, generation: false };
 let gameWon = false;
-let isPracticeMode = window.location.pathname.includes('practice.html'); // NEW: Detect mode based on URL
-let currentSeed = ''; // NEW: Stores the seed for the current game
 
 // --- A. Robust PRNG Functions (Replacement Block) ---
 
@@ -64,6 +62,7 @@ function seededRandom(seedString) {
     // 2. Return the sfc32 generator function using those seeds
     return sfc32(seeds[0], seeds[1], seeds[2], seeds[3]);
 }
+
 /**
  * Generates a seed based on the current date (YYYYMMDD)
  */
@@ -73,13 +72,6 @@ function getDailySeed() {
                        (today.getMonth() + 1).toString().padStart(2, '0') + 
                        today.getDate().toString().padStart(2, '0');
     return dateString
-}
-/**
- * Gets a random seed for practice mode.
- */
-function getRandomSeed() { 
-    // Use a combination of Math.random and Date.now for a robust random seed
-    return Math.random().toString() + Date.now().toString(); 
 }
 
 /**
@@ -116,16 +108,14 @@ function loadAutocompletePreference() {
 // --- B. Core Game Logic ---
 
 /**
- * Deterministically select a Pokémon based on a provided seed string.
- * (Replaces the old selectDailyPokemon and generalizes it)
+ * Selects the target Pokémon deterministically based on the date.
  */
-function selectPokemonBySeed(data, seedString) {
-    const seed = cyrb128(seedString);
-    const rand = sfc32(...seed);
-
-    // Get a random index deterministically
-    const index = Math.floor(rand() * data.length);
-    return data[index];
+function selectDailyPokemon(data) {
+    const seed = getDailySeed();
+    const rng = seededRandom(seed);
+    const randomIndex = Math.floor(rng() * data.length); 
+    
+    return data[randomIndex];
 }
 
 /**
@@ -160,20 +150,12 @@ function renderVictoryMessage() {
     
     // 1. Set the victory message content
     messageEl.className = 'correct-guess';
-    if (isPracticeMode) {
-        messageEl.innerHTML = `
-            <h2>CONGRATULATIONS!</h2>
-            <p>You correctly identified ${targetPokemon.name} in ${guessCount} guesses!</p>
-        `;
-    }
-    else {
-        messageEl.innerHTML = `
-            <h2>CONGRATULATIONS!</h2>
-            <p>You correctly identified ${targetPokemon.name} in ${guessCount} guesses!</p>
-            <textarea id="share-summary" rows="5" readonly>${summaryText}</textarea>
-            <button onclick="navigator.clipboard.writeText(document.getElementById('share-summary').value)">Copy Summary</button>
-        `;
-    }
+    messageEl.innerHTML = `
+        <h2>CONGRATULATIONS!</h2>
+        <p>You correctly identified ${targetPokemon.name} in ${guessCount} guesses!</p>
+        <textarea id="share-summary" rows="5" readonly>${summaryText}</textarea>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('share-summary').value)">Copy Summary</button>
+    `;
 
     // 2. Move the message element above the guess history.
     const container = document.querySelector('.container');
@@ -524,112 +506,8 @@ function populateDatalist() {const datalist = document.getElementById('pokemon-l
         .join('');
 }
 // --- E. Initialization ---
-function resetGameVariables() { 
-    guesses = [];
-    gameHistoryString = '';
-    hintsUsed = { type1: false, type2: false, generation: false };
-    gameWon = false;
-    document.getElementById('message').innerHTML = ''; // Clear message and any buttons
-    document.getElementById('guess-history').innerHTML = ''; // Clear history
-    document.getElementById('pokemon-input').value = ''; // Clear input
-    
-    // Re-enable all hint buttons
-    document.querySelectorAll('.hint-buttons button').forEach(btn => {
-        btn.disabled = false;
-        btn.style.opacity = '1';
-    });
-    // Re-enable guess input/button (Assuming disableInputAndButtons is used elsewhere)
-    document.getElementById('pokemon-input').disabled = false;
-    document.getElementById('submit-guess-btn').disabled = false;
-}
 
-/**
- * Starts or restarts a game, selecting the Pokémon based on the current mode.
- */
-function startGame() { 
-    resetGameVariables();
-    
-    if (isPracticeMode) {
-        currentSeed = getRandomSeed();
-        targetPokemon = selectPokemonBySeed(pokemonData, currentSeed);
-    } else {
-        // Daily Mode Logic
-        currentSeed = getDailySeed();
-        targetPokemon = selectPokemonBySeed(pokemonData, currentSeed);
-        loadGameState(); // Load state for Daily Mode
-    }
-
-    renderTargetStats();
-    renderHints();
-    renderGuessHistory();
-    // If game was already won, re-render win state
-    if (gameWon) {
-        disableInputAndButtons();
-        renderMessage(`You already guessed the Pokémon: ${targetPokemon.name}!`, true); 
-    }
-}
-
-/**
- * Starts a new game in Practice Mode when the 'Play Again' button is clicked.
- */
-function startNewPracticeGame() { 
-    if (isPracticeMode) {
-        startGame(); // This will generate a new random seed and reset the UI
-    }
-}
-
-// Find and modify `renderMessage(text, isWin = false)` function:
-function renderMessage(text, isWin = false) { 
-    const messageEl = document.getElementById('message');
-    // Clear the message container's content, including any previous buttons/summaries
-    messageEl.innerHTML = ''; 
-    
-    // Create a simple text node for the main message
-    const textNode = document.createTextNode(text);
-    messageEl.appendChild(textNode);
-
-    if (isWin) {
-        disableInputAndButtons();
-
-        if (!isPracticeMode) {
-            // Daily Mode: Show copyable summary
-            const summaryTitle = document.createElement('h3');
-            summaryTitle.textContent = "Today's Result Summary (Copy and Share):";
-            messageEl.appendChild(summaryTitle);
-
-            const summaryOutput = document.createElement('pre');
-            summaryOutput.id = 'share-summary';
-            // Assuming generateGameHistoryString is defined elsewhere
-            summaryOutput.textContent = generateGameHistoryString(targetPokemon.name, guesses.length); 
-            messageEl.appendChild(summaryOutput);
-            
-            // Add a Copy to Clipboard button (for daily mode only)
-            const copyButton = document.createElement('button');
-            copyButton.textContent = 'Copy to Clipboard';
-            copyButton.onclick = () => {
-                navigator.clipboard.writeText(summaryOutput.textContent).then(() => {
-                    copyButton.textContent = 'Copied!';
-                    setTimeout(() => copyButton.textContent = 'Copy to Clipboard', 2000);
-                }).catch(err => {
-                    console.error('Could not copy text: ', err);
-                });
-            };
-            messageEl.appendChild(copyButton);
-            
-        } else {
-            // Practice Mode: Add a Play Again button
-            const playAgainButton = document.createElement('button');
-            playAgainButton.id = 'play-again-btn';
-            playAgainButton.textContent = 'Play Again (New Pokémon)';
-            messageEl.appendChild(playAgainButton);
-            playAgainButton.addEventListener('click', startNewPracticeGame);
-        }
-    }
-}
-
-
-// Find and modify `initializeGame` function:
-async function initializeGame() { 
+async function initializeGame() {
     try {
         const response = await fetch('pokemon_data.json');
         pokemonData = await response.json();
@@ -639,18 +517,18 @@ async function initializeGame() {
         return;
     }
 
-    // ORIGINAL LINES REMOVED/MOVED TO startGame():
-    // targetPokemon = selectDailyPokemon(pokemonData);
-    // loadGameState();
-    // renderTargetStats();
-    // renderHints();
-    // renderGuessHistory();
-
+    targetPokemon = selectDailyPokemon(pokemonData);
+    
+    // Load state and then render everything
+    loadGameState();
+    renderTargetStats();
+    renderHints();
+    renderGuessHistory();
     populateDatalist();
 
     loadAutocompletePreference();
 
-    // Setup Event Listeners (KEEP ORIGINAL)
+    // Setup Event Listeners
     document.getElementById('submit-guess-btn').addEventListener('click', handleSubmitGuess);
     document.getElementById('pokemon-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSubmitGuess();
@@ -663,9 +541,6 @@ async function initializeGame() {
     document.getElementById('toggle-autocomplete').addEventListener('change', (e) => {
         toggleAutocomplete(e.target.checked);
     });
-    
-    // START THE GAME
-    startGame(); // NEW: Centralized game start
 }
 
 // Start the game!

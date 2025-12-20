@@ -452,8 +452,7 @@ function handleSubmitGuess() {
         // 3. Update UI and State
         inputEl.value = '';
         renderGuessHistory();
-        renderHints();
-        populateDatalist();
+        renderHints(); // Update hint button state
         saveGameState();
     } 
 
@@ -481,8 +480,6 @@ function populateDatalist() {const datalist = document.getElementById('pokemon-l
     let filteredPokemon = pokemonData;
 
     // --- Filtering Logic ---
-    const guessedNames = guesses.map(g => g.name.toLowerCase());
-    filteredPokemon = filteredPokemon.filter(p => !guessedNames.includes(p.name.toLowerCase()));
     
     // 1. Filter by Type 1
     if (hintsUsed.type1) {

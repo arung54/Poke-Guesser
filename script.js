@@ -1,10 +1,5 @@
 const STATS = ['hp', 'attack', 'defense', 'sp_attack', 'sp_defense', 'speed'];
 const HINTS = ['type1', 'type2', 'generation'];
-const ALL_TYPES = [
-    'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice', 
-    'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 
-    'Bug', 'Rock', 'Ghost', 'Dragon', 'Steel', 'Dark', 'Fairy'
-];
 
 let pokemonData = [];
 let targetPokemon = null;
@@ -458,7 +453,6 @@ function handleSubmitGuess() {
         inputEl.value = '';
         renderGuessHistory();
         renderHints(); // Update hint button state
-        populateDatalist();
         saveGameState();
     } 
 
@@ -480,43 +474,35 @@ function handleHintClick(hintType) {
 /**
  * Populates the datalist for auto-completion.
  */
-function populateDatalist() {
-    const datalist = document.getElementById('pokemon-list');
-    const inputVal = document.getElementById('pokemon-input').value.trim().toLowerCase();
+function populateDatalist() {const datalist = document.getElementById('pokemon-list');
     
+    // Start with all Pokémon
     let filteredPokemon = pokemonData;
 
-    // 1. Filter out already guessed Pokémon
-    const guessedNames = guesses.map(g => g.name.toLowerCase());
-    filteredPokemon = filteredPokemon.filter(p => !guessedNames.includes(p.name.toLowerCase()));
-
-    // 2. Existing Hint Filters
-    if (hintsUsed.type1) filteredPokemon = filteredPokemon.filter(p => p.type1 === targetPokemon.type1);
-    if (hintsUsed.type2) filteredPokemon = filteredPokemon.filter(p => p.type2 === targetPokemon.type2);
-    if (hintsUsed.generation) filteredPokemon = filteredPokemon.filter(p => p.generation === targetPokemon.generation);
-
-    // 3. NEW: Category Keyword Filtering (Type/Gen)
-    const typeMatch = ALL_TYPES.find(t => t.toLowerCase() === inputVal);
-    const genMatch = inputVal.match(/^(?:gen|generation)\s*(\d+)$/i);
-
-    if (typeMatch) {
-        // If they typed a valid Type, only show Pokémon of that type
-        filteredPokemon = filteredPokemon.filter(p => 
-            p.type1.toLowerCase() === inputVal || (p.type2 && p.type2.toLowerCase() === inputVal)
-        );
-    } else if (genMatch) {
-        // If they typed "Gen 1" or "Gen1", only show that generation
-        const genNum = parseInt(genMatch[1]);
-        filteredPokemon = filteredPokemon.filter(p => p.generation === genNum);
+    // --- Filtering Logic ---
+    
+    // 1. Filter by Type 1
+    if (hintsUsed.type1) {
+        const requiredType1 = targetPokemon.type1;
+        filteredPokemon = filteredPokemon.filter(p => p.type1 === requiredType1);
+    }
+    
+    // 2. Filter by Type 2
+    if (hintsUsed.type2) {
+        const requiredType2 = targetPokemon.type2;
+        filteredPokemon = filteredPokemon.filter(p => p.type2 === requiredType2);
+    }
+    
+    // 3. Filter by Generation
+    if (hintsUsed.generation) {
+        const requiredGen = targetPokemon.generation;
+        filteredPokemon = filteredPokemon.filter(p => p.generation === requiredGen);
     }
 
-    // 4. Generate Options
-    // We append Type/Gen info so the browser's search filter sees the keywords
+    // --- Generate Datalist Options ---
+    
     datalist.innerHTML = filteredPokemon
-        .map(p => {
-            const metadata = `(${p.type1}${p.type2 !== 'None' ? '/' + p.type2 : ''}) [Gen ${p.generation}]`;
-            return `<option value="${p.name}" label="${metadata}">`;
-        })
+        .map(p => `<option value="${p.name}">`)
         .join('');
 }
 // --- E. Initialization ---
@@ -555,7 +541,6 @@ async function initializeGame() {
     document.getElementById('toggle-autocomplete').addEventListener('change', (e) => {
         toggleAutocomplete(e.target.checked);
     });
-    document.getElementById('pokemon-input').addEventListener('input', populateDatalist);
 }
 
 // Start the game!
